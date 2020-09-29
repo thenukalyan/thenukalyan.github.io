@@ -7,7 +7,6 @@
         height: 800px;
         background: url(https://c0d3.com/challenges/assets/watch.jpg);
     }
-
     .content {
         position: absolute;
         top: 210px;
@@ -18,7 +17,6 @@
         border-radius: 50%;
         overflow: hidden;
     }
-
     .timing {
         position: absolute;
         top: 50%;
@@ -28,19 +26,15 @@
         cursor: pointer;
         transition: top 0.5s linear;
     }
-
     .timing.active {
         top: 0;
     }
-
     .time {
         color: black;
         text-align: center;
         font-size: 5em;
         margin-top: 30px;
-
     }
-
     .date {
         color: black;
         text-align: center;
@@ -60,10 +54,7 @@
             <h2 class="date">Date</h2>
         </div>
     </div>
-
 </div>
-
-
 </html>
 <script>
     const timing = document.querySelector(".timing")
@@ -75,20 +66,17 @@
         "July", "August", "September", "October", "November", "December"];
     let d = date.getMinutes()
     if (d < 10) {
-        minutes = `0${minutes}`
+        minutes = `0${d}`
     }
     if (date.getHours() > 12) {
-        time.innerText = `${date.getHours() - 12}:${d}`
+        time.innerText = `${date.getHours() - 12}:${minutes}`
     }
     else {
-        time.innerText = `${date.getHours()}:${d}`
+        time.innerText = `${date.getHours()}:${minutes}`
     }
     day.innerText = ` ${week[date.getDay()]} 
      ${month[date.getMonth()]} ${date.getDate()},${date.getFullYear()} `
     timing.addEventListener('click', () => {
         timing.classList.toggle('active')
     })
-
-
-
 </script>
