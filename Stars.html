@@ -1,0 +1,73 @@
+<style>
+    i.fas {
+        -webkit-text-stroke-width: 3px;
+        -webkit-text-stroke-color: black;
+        color: yellow;
+        cursor: pointer;
+    }
+
+    h3 {
+        font-size: 15px;
+    }
+</style>
+<html>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css">
+<div class="screen">
+</div>
+<h3 class="heading"></h3>
+
+</html>
+<script>
+    const main = document.querySelector(".screen");
+    const heading = document.querySelector(".heading");
+    let shouldChangeOnHover = true;
+    main.addEventListener("mouseleave", () => {
+        shouldChangeOnHover = true;
+    })
+    function Star(position) {
+        this.position = position;
+        this.element = document.createElement('i');
+        this.element.classList.add('far');
+        this.element.classList.add('fa-star');
+        main.append(this.element);
+
+        this.element.addEventListener("click", () => {
+            heading.innerText = `You have given ${this.position} Stars!`;
+            shouldChangeOnHover = false;
+        })
+        this.element.addEventListener("mouseover", () => {
+            if (shouldChangeOnHover) {
+                heading.innerText = `You are giving ${this.position} Stars!`;
+                clearActive();
+                setActive(this.position);
+            }
+        })
+    }
+    Star.prototype.removeClass = function () {
+        this.element.classList.remove("fas")
+    }
+    const clearActive = () => {
+        arrayStar.forEach((star) => {
+            star.removeClass()
+        })
+    }
+    Star.prototype.setActive = function () {
+        this.element.classList.add("fas")
+    }
+
+    const setActive = (position) => {
+        arrayStar.slice(0, position).forEach((star) => {
+            star.setActive();
+        })
+    }
+    const createXStars = (num, i = 1, result = []) => {
+        if (i > num) {
+            return result;
+        }
+        result.push(new Star(i));
+        return createXStars(num, i + 1, result);
+    }
+
+    const arrayStar = createXStars(5);
+
+</script>
