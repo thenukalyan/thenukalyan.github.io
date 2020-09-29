@@ -1,0 +1,148 @@
+<style>
+    .boxClass {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        box-sizing: border-box;
+        border: solid skyblue 5px;
+        background-color: white;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+
+    .highlighted {
+        background-color: yellow;
+    }
+
+    .overLay {
+        display: none;
+        position: fixed;
+        background-color: rgb(0, 0, 0, 0.5);
+        border: solid 1px black;
+        pointer-events: none;
+    }
+
+    .container {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+</style>
+<html>
+<div class="container"></div>
+<div class="overLay"></div>
+
+</html>
+<script>
+    const container = document.querySelector(".container");
+    const overLay = document.querySelector(".overLay");
+    function Box(row, column) {
+        this.column = column;
+        this.row = row;
+        this.element = document.createElement('div');
+        this.element.classList.add("boxClass");
+
+        this.turnOn = () => {
+            this.element.classList.add("highlighted");
+        }
+
+        this.turnOff = () => {
+            this.element.classList.remove("highlighted");
+        }
+        this.highlighted = (startX, startY, endX, endY) => {
+            if (this.row >= startY && this.row <= endY && this.column >= startX && this.column <= endX) {
+                this.turnOn();
+            }
+            else {
+                this.turnOff();
+            }
+        }
+    }
+    let isHighlighted = false;
+    let mouseDownX, mouseDownY;
+    container.addEventListener("mousedown", (e) => {
+        isHighlighted = true;
+        mouseDownX = e.clientX;
+        mouseDownY = e.clientY;
+        overLay.style.left = `${mouseDownX}px`;
+        overLay.style.top = `${mouseDownY}px`;
+        overLay.style.display = `block`;
+
+    })
+    container.addEventListener("mouseup", () => {
+        isHighlighted = false;
+        overLay.style.display = `none`;
+        overLay.style.width = `0px`;
+        overLay.style.height = `0px`;
+    })
+
+    const checkAllBoxex = (startX, startY, endX, endY) => {
+        cubic.forEach((row) => {
+            row.forEach((box) => {
+                box.highlighted(startX, startY, endX, endY);
+            })
+        })
+    }
+
+    container.addEventListener("mousemove", (e) => {
+        let startX, startY, endX, endY;
+        if (isHighlighted) {
+            const leftToRight = e.clientX > mouseDownX;
+            const topToBottom = e.clientY > mouseDownY;
+            if (leftToRight) {
+                startX = Math.floor(mouseDownX / 55);
+                endX = Math.floor(e.clientX / 55);
+                overLay.style.left = `${mouseDownX}px`;
+                overLay.style.width = `${e.clientX - mouseDownX}px`;
+            }
+            else {
+                startX = Math.floor(e.clientX / 55);
+                endX = Math.floor(mouseDownX / 55);
+                overLay.style.left = `${e.clientX}px`;
+                overLay.style.width = `${mouseDownX - e.clientX}px`;
+            }
+
+            if (topToBottom) {
+                startY = Math.floor(mouseDownY / 55);
+                endY = Math.floor(e.clientY / 55);
+                overLay.style.top = `${mouseDownY}px`;
+                overLay.style.height = `${e.clientY - mouseDownY}px`;
+            }
+            else {
+                startY = Math.floor( e.clientY / 55);
+                endY = Math.floor(mouseDownY / 55);
+                overLay.style.top = `${e.clientY}px`;
+                overLay.style.height = `${mouseDownY - e.clientY}px`;
+            }
+            checkAllBoxex(startX, startY, endX, endY)
+        }
+    })
+
+    const createRowDiv = (boxArray) => {
+        const div = document.createElement("div");
+        div.classList.add("divClass");
+        boxArray.forEach((box) => {
+            div.append(box.element);
+        })
+        container.append(div);
+    }
+
+    const game = (rowSize, columnSize, i = 0, j = 0, result = [], inner = []) => {
+        if (i >= rowSize) {
+            return result;
+        }
+        if (j < columnSize) {
+            inner.push(new Box(i, j));
+            return game(rowSize, columnSize, i, j + 1, result, inner);
+        }
+        result.push(inner);
+        createRowDiv(inner)
+        return game(rowSize, columnSize, i + 1, j = 0, result, inner = []);
+
+    }
+    const cubic = game(5, 5)
+
+</script>
