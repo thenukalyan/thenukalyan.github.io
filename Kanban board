@@ -1,0 +1,257 @@
+<style>
+    .container {
+        width: 22%;
+        margin-left: 30px;
+        margin-top: 30px;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    textarea {
+        width: 221px;
+    }
+
+    .headerClass {
+        text-align: center;
+        box-sizing: border-box;
+        color: white;
+        height: 30px;
+        padding: 6px;
+    }
+
+    .inputClass {
+        display: flex;
+        width: 100%;
+    }
+
+    .itemClass {
+        background-color: grey;
+        margin-bottom: 2px;
+        height: 30px;
+    }
+
+    .spanInnerText {
+        text-align: center;
+    }
+
+    .leftArrow {
+        margin-right: 5px;
+        float: left;
+        cursor: pointer
+    }
+
+    .rightArrow {
+        float: right;
+        cursor: pointer;
+    }
+
+    .undo {
+        background-color: grey;
+        color: honeydew;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 49px;
+        height: 35px;
+        margin-bottom: 20px;
+    }
+</style>
+<html>
+<div class="screen"></div>
+<button class="undo">UNDO</button>
+
+</html>
+<script>
+    const headings = [
+        {
+            name: 'To-Do',
+            color: '#35235D'
+        },
+        {
+            name: 'Doing',
+            color: '#CB2402'
+        },
+        {
+            name: 'Done',
+            color: '#4C49A2'
+        },
+        {
+            name: 'Approved',
+            color: '#A31A48'
+        }
+    ]
+    const screen = document.querySelector(".screen");
+    const undo = document.querySelector(".undo")
+    function Board(position) {
+        const heading = headings[position];
+        this.element = document.createElement("div");
+        this.element.classList.add("container");
+        const header = document.createElement("div");
+        header.classList.add("headerClass");
+        this.element.append(header)
+        header.innerText = `${heading.name}`;
+        header.style.backgroundColor = `${heading.color}`
+        const itemList = document.createElement("div");
+        itemList.classList.add("itemLists");
+        this.element.append(itemList);
+        const input = document.createElement("div");
+        input.classList.add("inputClass");
+        const textarea = document.createElement("textarea");
+        const att = document.createAttribute("rows")
+        att.value = "5";
+        textarea.setAttributeNode(att);
+        input.append(textarea);
+        const button = document.createElement("button")
+        button.innerText = `Submit`;
+        input.append(button);
+        this.element.append(input);
+        screen.append(this.element);
+        let result = [];
+        const locallyStored = localStorage.getItem(heading.name);
+
+        const todoList = []
+
+        const renderItemList = () => {
+            itemList.innerHTML = '';
+            todoList.forEach(todoItem => itemList.append(todoItem.getItem()));
+        }
+
+        if (locallyStored) {
+            result = locallyStored.split(",");
+            result.forEach((e, textIndex) => {
+                todoList.push(new Arrows(e, textIndex));
+            })
+            renderItemList();
+        }
+
+        button.onclick = () => {
+
+            actionArray.push({
+                boardIndex: position,
+                value: textarea.value,
+                operation: 'newlyAdded'
+            })
+            this.add(textarea.value)
+            textarea.value = '';
+
+
+        }
+
+        this.add = (value) => {
+            const textIndex = result.length;
+            result.push(value);
+            todoList.push(new Arrows(value, textIndex));
+            localStorage.setItem(heading.name, result);
+            renderItemList();
+        }
+
+        this.addAtIndex = (textIndex, value) => {
+            result.splice(textIndex, 0, value);
+            todoList.splice(textIndex, 0, new Arrows(value, textIndex));
+            renderItemList();
+            localStorage.setItem(heading.name, result);
+        }
+
+        this.remove = () => {
+            const todoItem = todoList.pop();
+            todoItem.remove();
+            renderItemList();
+        }
+
+        function Arrows(text, textIndex) {
+            const item = document.createElement("div");
+            item.classList.add("itemClass");
+            const left = document.createElement("span");
+            left.classList.add("leftArrow");
+            left.innerText = "<";
+            item.append(left);
+            const spanInner = document.createElement("span");
+            spanInner.classList.add("spanInnerText");
+            spanInner.innerText = text;
+            item.append(spanInner);
+            const right = document.createElement("span");
+            right.classList.add("rightArrow")
+            right.innerText = ">";
+            item.append(right);
+            left.onclick = () => {
+                boxes[position - 1].add(text);
+                item.remove()
+                result.splice(textIndex, 1);
+                todoList.splice(textIndex, 1);
+                localStorage.setItem(heading.name, result);
+
+                actionArray.push({
+                    boardIndex: position,
+                    value: text,
+                    textIndex,
+                    operation: 'moveLeft'
+                })
+                console.log(actionArray)
+            }
+            right.onclick = () => {
+                boxes[position + 1].add(text);
+                item.remove();
+                result.splice(textIndex, 1);
+                todoList.splice(textIndex, 1);
+                localStorage.setItem(heading.name, result);
+                actionArray.push({
+                    boardIndex: position,
+                    value: text,
+                    textIndex,
+                    operation: 'moveRight'
+                })
+            }
+            spanInner.addEventListener("click", () => {
+                let r = confirm(`Are you sure you want to remove ${text}`)
+                if (r) {
+                    item.remove();
+                    result.splice(textIndex, 1);
+                    todoList.splice(textIndex, 1);
+                    localStorage.setItem(heading.name, result);
+                    actionArray.push({
+                        boardIndex: position,
+                        value: text,
+                        textIndex,
+                        operation: 'removed'
+                    })
+                }
+            })
+
+            this.getItem = () => {
+                return item;
+            }
+
+            this.remove = () => {
+                item.remove();
+                result.splice(textIndex, 1);
+                localStorage.setItem(heading.name, result);
+            }
+        }
+    }
+    const boardCount = (num, i = 0, result = []) => {
+        if (i >= num) {
+            return result;
+        }
+        result.push(new Board(i));
+        return boardCount(num, i + 1, result)
+    }
+    const boxes = boardCount(4);
+
+    const actionArray = [];
+    undo.onclick = () => {
+        const action = actionArray.pop();
+        if (action.operation === 'moveLeft') {
+            boxes[action.boardIndex].addAtIndex(action.textIndex, action.value);
+            boxes[action.boardIndex - 1].remove();
+        }
+        else if (action.operation === 'moveRight') {
+            boxes[action.boardIndex].addAtIndex(action.textIndex, action.value);
+            boxes[action.boardIndex + 1].remove();
+        } else if (action.operation === 'removed') {
+            boxes[action.boardIndex].addAtIndex(action.textIndex, action.value);
+        }
+        else if (action.operation === 'newlyAdded') {
+            boxes[action.boardIndex].remove();
+        }
+    }
+</script>
