@@ -1,0 +1,182 @@
+<style>
+  .elementClass {
+    width: 50px;
+    height: 50px;
+    background-color: white;
+    border: black solid 2px;
+    display: inline-block;
+    box-sizing: border-box;
+    vertical-align: top;
+  }
+
+  .flag {
+    background-color: red;
+  }
+  .revealed{
+    background-color: lightgray;
+  }
+</style>
+<html>
+<div class="container"></div>
+<audio class="sound"
+  src="https://raw.githubusercontent.com/wesbos/JavaScript30/master/01%20-%20JavaScript%20Drum%20Kit/sounds/clap.wav"></audio>
+
+
+
+</html>
+<script>
+  const container = document.querySelector(".container");
+  const sound = document.querySelector(".sound");
+
+
+  function Cell(row, column) {
+    this.row = row;
+    this.column = column;
+    this.element = document.createElement("div");
+    this.element.classList.add("elementClass");
+    this.hasBomb = false;
+    this.revealed = false;
+    
+    let count;
+    let cellsOpen;
+    this.open = () => {
+      if (this.revealed || this.hasBomb) {
+        return;
+      }
+      this.revealed = true;
+      this.element.classList.add("revealed");      
+      const neighbours = getNeighboursList(row, column);
+      const count = getBombNeighboursCount(row, column);
+      this.element.innerText = count;
+      if (count === 0) {
+        neighbours.forEach(cell => cell.open());
+      }
+    }
+
+    this.element.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (this.revealed) {
+        return;
+      }
+      this.element.classList.toggle('flag');
+    })
+    this.element.onclick = () => {
+      this.element.classList.add("revealed");
+      this.element.classList.remove('flag')
+      if (this.hasBomb) {
+        sound.play();
+        bombArray.forEach(bombCell => {
+          bombCell.element.innerText = '💣'
+        });
+        let userInput = parseInt(prompt(`Game over.Start new game?`));
+        restart(userInput);
+      } else {
+        this.open();
+        if (allNonBombCellsRevealed()) {
+          let userInput = parseInt(prompt(`You have won!!`));
+          restart(userInput);
+        }
+      }
+    }
+
+    this.setBomb = () => {
+      this.hasBomb = true;
+    }
+    const allNonBombCellsRevealed = () => {
+      const revealedCount = gameArray.reduce((rowAcc, row) => {
+        return row.reduce((acc, cell) => {
+          if (cell.revealed) {
+            return acc + 1
+          }
+          return acc;
+        }, rowAcc)
+      }, 0);
+      return revealedCount === ((gameSize * gameSize) - bombSize);
+    }
+    const restart = (userInput) => {
+      if (!Number.isInteger(userInput) || userInput === 0) {
+        return
+      }
+      container.innerHTML = "";
+      gameSize = userInput;
+      bombSize = userInput;
+      bombArray = [];
+      gameArray = box(gameSize, gameSize);
+      sweeper(userInput);
+    }
+    const getBombNeighboursCount = (row, column) => {
+      const neighbours = getNeighboursList(row, column)
+      const bombCells = neighbours.filter(e => e.hasBomb)
+      const bombCount = bombCells.length;
+      return bombCount;
+    }
+  }
+
+  const getNeighboursList = (row, column) => {
+    let array = [];
+    if (gameArray[row - 1] && gameArray[row - 1][column]) {
+      array.push(gameArray[row - 1][column]);
+    }
+    if (gameArray[row - 1] && gameArray[row - 1][column - 1]) {
+      array.push(gameArray[row - 1][column - 1]);
+    }
+    if (gameArray[row - 1] && gameArray[row - 1][column + 1]) {
+      array.push(gameArray[row - 1][column + 1]);
+    }
+    if (gameArray[row] && gameArray[row][column - 1]) {
+      array.push(gameArray[row][column - 1]);
+    }
+    if (gameArray[row] && gameArray[row][column + 1]) {
+      array.push(gameArray[row][column + 1]);
+    }
+    if (gameArray[row + 1] && gameArray[row + 1][column - 1]) {
+      array.push(gameArray[row + 1][column - 1]);
+    }
+    if (gameArray[row + 1] && gameArray[row + 1][column]) {
+      array.push(gameArray[row + 1][column]);
+    }
+    if (gameArray[row + 1] && gameArray[row + 1][column + 1]) {
+      array.push(gameArray[row + 1][column + 1]);
+    }
+    return array;
+  }
+  const createRowDiv = (gameRow) => {
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("rowDivClass");
+    gameRow.forEach((cell) => {
+      rowDiv.append(cell.element);
+    })
+    container.append(rowDiv)
+  }
+
+
+  const box = (row, column, i = 0, j = 0, inner = [], result = []) => {
+    if (i >= row) {
+      return result;
+    }
+    if (j < column) {
+      inner.push(new Cell(i, j));
+      return box(row, column, i, j + 1, inner, result)
+    }
+    result.push(inner);
+    createRowDiv(inner)
+    return box(row, column, i + 1, j = 0, inner = [], result)
+  }
+
+  let gameSize = 10;
+  let bombSize = 10;
+  let gameArray = box(gameSize, gameSize);
+
+  let bombArray = [];
+  const sweeper = (bombSize, i = 0) => {
+    if (i >= bombSize) {
+      return;
+    }
+    let row = Math.floor(Math.random() * gameSize);
+    let column = Math.floor(Math.random() * gameSize);
+    bombArray.push(gameArray[row][column])
+    gameArray[row][column].setBomb();
+    return sweeper(bombSize, i + 1)
+  }
+  sweeper(bombSize)
+</script>
